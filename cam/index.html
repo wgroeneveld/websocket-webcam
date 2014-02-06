@@ -1,0 +1,67 @@
+<html>
+	<head>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.2.1/moment.min.js"></script>
+		<script src="lazyload.js"></script>
+
+		<style>
+			img.lazy {
+				border: 1px solid black;
+				margin-right: 100px;
+			}
+		</style>
+
+		<script>
+			$(function() {
+				function refresh() {
+					$("#cam").attr('src', $("#cam").attr('src') + "?" + new Date().getTime());
+					$("#update").html(moment().format('hh:mm:ss'));
+				}
+
+				function createImageTag(file) {
+					var time = moment(file.time).format();
+					return $("<img class='lazy' width='640' height='480'>")
+						.attr('style', 'display:inline')
+						.attr('alt', 'time: ' + time)
+						.attr('title', 'time: ' + time)
+						.data('original', file.name);
+				}
+
+				function fetchHistory() {
+					$.getJSON("index.json", function(data) {
+						$("#history").html("");
+						data.files.forEach(function(file) {
+							$("#history").append(createImageTag(file));
+						});
+
+						$("img.lazy").lazyload({
+   							 effect: "fadeIn"
+						});
+					});
+				}
+
+				refresh();
+				setTimeout(refresh, 1000 * 60);
+				fetchHistory();
+			});
+		</script>
+	</head>	
+	<body>
+		<h2>Cam capture live feed</h2>
+		<img src="image.jpg" alt="cam" id="cam">
+		<p>
+		<strong>DO NOT REFRESH</strong> page, happens automatically every 60 seconds.<br>
+		Last update: <h3 id="update"></h3>
+		</p>
+		<hr>
+		<h2>HOURLY Cam history</h2>
+
+		<div id="history">
+			Fetching... Please wait. 
+		</div>
+		<hr>
+
+		<script>
+		</script>
+	</body>
+</html>

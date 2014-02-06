@@ -1,0 +1,73 @@
+
+
+<video autoplay></video>
+<img src="" width="640" height="480" id="image">
+<canvas style="display:none;" width="640" height="480" ></canvas>
+
+<script>
+/**
+
+NodeJS server, Chrome/HTML5 client, WebSockets for transferring
+http://francisshanahan.com/index.php/2011/stream-a-webcam-using-javascript-nodejs-android-opera-mobile-web-sockets-and-html5/
+
+*/
+
+function setupWebSocket() {
+	var ws = new WebSocket("ws://localhost:8080/");
+	ws.onopen = function() {
+		console.log("connected");
+	}
+	ws.onmessage = function(e) {
+		document.getElementById("streamed").src = e.data;
+	}
+	return ws;
+}
+var ws = setupWebSocket();
+
+// cross-platform stuff. 
+window.URL = window.URL || window.webkitURL;
+navigator.getUserMedia  = navigator.getUserMedia || navigator.webkitGetUserMedia ||
+                          navigator.mozGetUserMedia || navigator.msGetUserMedia;
+// Note: The file system has been prefixed as of Google Chrome 12:
+window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
+
+						  
+var video = document.querySelector('video');
+var canvas = document.querySelector('canvas');
+var ctx = canvas.getContext('2d');
+var localMediaStream = null;
+
+function snapshot() {
+  if (localMediaStream) {
+    ctx.drawImage(video, 0, 0);
+    // "image/webp" works in Chrome 18. In other browsers, this will fall back to image/png.
+	var image = canvas.toDataURL('image/png');
+    document.querySelector('img').src = image;
+	
+	//tryToSaveIt(image);
+	ws.send(image);
+  }
+}
+
+function startVideo() {
+	video.addEventListener('click', snapshot, false);
+	setInterval(snapshot, 1000 * 60);
+	// Not showing vendor prefixes or code that works cross-browser.
+	navigator.getUserMedia({video: true}, function(stream) {
+	  video.src = window.URL.createObjectURL(stream);
+	  localMediaStream = stream;
+	}, function(e) {
+		console.log("rejected", e);
+	});
+}
+</script>
+
+<h2>hello!</h2>
+
+<a href="#" onclick="startVideo()">klik hier</a> om video te capturen.<br/>
+
+<hr/>
+
+<h2>Streamed image:</h2>
+
+<img src="" width="640" height="480" id="streamed">
